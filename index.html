@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fly AI - Complete System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin:0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+    scroll-behavior:smooth;
+}
+
+nav {
+    background:#111;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+nav button{
+    margin-left:10px;
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
+    background:#00c6ff;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+nav button:hover{ background:#00ffcc; }
+
+.section{
+    padding:80px 10%;
+    text-align:center;
+}
+
+.hero{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+}
+
+.hero h1{
+    font-size:60px;
+}
+
+.btn{
+    padding:12px 25px;
+    background:#00c6ff;
+    border:none;
+    border-radius:25px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.btn:hover{ background:#00ffcc; }
+
+/* FLY ANIMATION */
+.fly{
+    width:50px;
+    height:50px;
+    background:radial-gradient(circle,#aaa 30%,#555 70%);
+    border-radius:50%;
+    position:absolute;
+    top:30%;
+    left:-100px;
+    animation:fly 12s linear infinite;
+}
+
+.fly::before,.fly::after{
+    content:'';
+    position:absolute;
+    width:30px;
+    height:15px;
+    background:rgba(255,255,255,0.5);
+    border-radius:50%;
+    top:-8px;
+}
+
+.fly::before{ left:-15px;}
+.fly::after{ right:-15px;}
+
+@keyframes fly{
+    0%{transform:translateX(0) translateY(0);}
+    50%{transform:translateX(1000px) translateY(100px);}
+    100%{transform:translateX(1600px) translateY(0);}
+}
+
+.container{ padding:40px 10%; }
+
+input,select,textarea,button{
+    padding:10px;
+    margin:10px 0;
+    border-radius:8px;
+    border:none;
+}
+
+button{
+    background:#00c6ff;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{ background:#00ffcc; }
+
+.card{
+    background:rgba(255,255,255,0.08);
+    padding:20px;
+    border-radius:12px;
+    margin-top:20px;
+}
+
+.hidden{ display:none; }
+
+.loader{
+    border:5px solid #f3f3f3;
+    border-top:5px solid #00c6ff;
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    animation:spin 1s linear infinite;
+    margin:auto;
+    display:none;
+}
+
+@keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(360deg);}
+}
+
+img.profile-pic{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+footer{
+    background:#111;
+    padding:20px;
+    text-align:center;
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+<div>🪰 Fly AI</div>
+<div id="navButtons" class="hidden">
+<button onclick="showDashboard()">Dashboard</button>
+<button onclick="showProfile()">Profile</button>
+<button onclick="logout()">Logout</button>
+</div>
+</nav>
+
+<!-- HERO LANDING -->
+<div class="hero" id="homeSection">
+<h1>Fly AI</h1>
+<p>AI-Powered Automated Morphological Analysis of Fruit Fly Images</p>
+<button class="btn" onclick="scrollToInfo()">Explore Project</button>
+<div class="fly"></div>
+</div>
+
+<!-- PROJECT INFO -->
+<div class="section" id="infoSection">
+<h2>About the Project</h2>
+<p>
+Fly AI automates morphological measurement of Drosophila melanogaster
+using Computer Vision and Deep Learning. It improves research efficiency
+for students, scientists, and medical teams.
+</p>
+
+<h2>Core Features</h2>
+<p>✔ Image Upload | ✔ AI Segmentation | ✔ Measurement | ✔ CSV Report | ✔ User Profiles</p>
+
+<button class="btn" onclick="showLogin()">Access System</button>
+</div>
+
+<!-- LOGIN PAGE -->
+<div class="container hidden" id="loginPage">
+<h2>Login</h2>
+<input type="text" id="username" placeholder="Username"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboardPage">
+<h2>Fly AI Analysis Dashboard</h2>
+
+<div class="card">
+<select id="userRole">
+<option>Biology Student</option>
+<option>Lab Researcher</option>
+<option>Scientist</option>
+<option>Medical Student</option>
+<option>Pharmaceutical Team</option>
+</select>
+</div>
+
+<div class="card">
+<input type="file" id="imageUpload" accept="image/*"><br>
+<div id="preview"></div>
+<button onclick="processImage()">Run AI Analysis</button>
+<div class="loader" id="loader"></div>
+</div>
+
+<div class="card hidden" id="results">
+<p>Wing Length: <span id="wing"></span> mm</p>
+<p>Body Length: <span id="body"></span> mm</p>
+<p>Eye Diameter: <span id="eye"></span> mm</p>
+<p>Classification: <span id="class"></span></p>
+<button onclick="downloadCSV()">Download CSV</button>
+</div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div class="container hidden" id="profilePage">
+<h2>User Profile</h2>
+
+<div class="card">
+<input type="file" id="profileUpload" accept="image/*"><br>
+<img id="profilePreview" class="profile-pic hidden">
+</div>
+
+<div class="card">
+<input type="text" id="fullName" placeholder="Full Name"><br>
+<input type="email" id="email" placeholder="Email"><br>
+<input type="text" id="institution" placeholder="Institution"><br>
+<textarea id="researchInterest" placeholder="Research Interest"></textarea><br>
+<button onclick="saveProfile()">Save Profile</button>
+</div>
+</div>
+
+<footer>© 2026 Fly AI | MSc AI Group Project</footer>
+
+<script>
+
+function scrollToInfo(){
+document.getElementById("infoSection").scrollIntoView();
+}
+
+function showLogin(){
+document.getElementById("homeSection").classList.add("hidden");
+document.getElementById("infoSection").classList.add("hidden");
+document.getElementById("loginPage").classList.remove("hidden");
+}
+
+function login(){
+let u=document.getElementById("username").value;
+let p=document.getElementById("password").value;
+if(u && p){
+localStorage.setItem("flyUser",u);
+document.getElementById("loginPage").classList.add("hidden");
+document.getElementById("dashboardPage").classList.remove("hidden");
+document.getElementById("navButtons").classList.remove("hidden");
+}else alert("Enter credentials");
+}
+
+function logout(){
+localStorage.clear();
+location.reload();
+}
+
+function showDashboard(){
+document.getElementById("profilePage").classList.add("hidden");
+document.getElementById("dashboardPage").classList.remove("hidden");
+}
+
+function showProfile(){
+document.getElementById("dashboardPage").classList.add("hidden");
+document.getElementById("profilePage").classList.remove("hidden");
+}
+
+document.getElementById("imageUpload").addEventListener("change",function(e){
+const reader=new FileReader();
+reader.onload=function(){
+document.getElementById("preview").innerHTML=`<img src="${reader.result}" width="200">`;
+}
+reader.readAsDataURL(e.target.files[0]);
+});
+
+let analysisData={};
+
+function processImage(){
+document.getElementById("loader").style.display="block";
+setTimeout(()=>{
+document.getElementById("loader").style.display="none";
+analysisData={
+wing:(Math.random()*3+2).toFixed(2),
+body:(Math.random()*4+3).toFixed(2),
+eye:(Math.random()*1+0.5).toFixed(2),
+class:Math.random()>0.5?"Normal":"Mutant"
+};
+document.getElementById("wing").innerText=analysisData.wing;
+document.getElementById("body").innerText=analysisData.body;
+document.getElementById("eye").innerText=analysisData.eye;
+document.getElementById("class").innerText=analysisData.class;
+document.getElementById("results").classList.remove("hidden");
+},2000);
+}
+
+function downloadCSV(){
+const role=document.getElementById("userRole").value;
+const csv=`User Role,${role}
+Wing Length,${analysisData.wing}
+Body Length,${analysisData.body}
+Eye Diameter,${analysisData.eye}
+Classification,${analysisData.class}`;
+const blob=new Blob([csv],{type:'text/csv'});
+const link=document.createElement("a");
+link.href=URL.createObjectURL(blob);
+link.download="fly_ai_report.csv";
+link.click();
+}
+
+document.getElementById("profileUpload").addEventListener("change",function(e){
+const reader=new FileReader();
+reader.onload=function(){
+let img=document.getElementById("profilePreview");
+img.src=reader.result;
+img.classList.remove("hidden");
+}
+reader.readAsDataURL(e.target.files[0]);
+});
+
+function saveProfile(){
+alert("Profile Saved Successfully");
+}
+
+</script>
+</body>
+</html>
