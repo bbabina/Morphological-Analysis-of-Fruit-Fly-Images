@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fly AI - Morphological Analysis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Fabric.js for canvas manipulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        nav {
+            background: #111;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00c6ff;
+        }
+        .nav-buttons button {
+            margin-left: 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background: #00c6ff;
+            color: #111;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-buttons button:hover {
+            background: #00ffcc;
+            transform: scale(1.05);
+        }
+        .section {
+            padding: 60px 5%;
+            text-align: center;
+        }
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0,198,255,0.5);
+        }
+        .hero p {
+            font-size: 1.3rem;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+        .btn {
+            padding: 12px 30px;
+            background: #00c6ff;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,198,255,0.4);
+        }
+        .btn:hover {
+            background: #00ffcc;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,255,204,0.5);
+        }
+        .fly {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #aaa 30%, #555 70%);
+            border-radius: 50%;
+            position: absolute;
+            top: 30%;
+            left: -100px;
+            animation: fly 15s linear infinite;
+        }
+        .fly::before, .fly::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 15px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            top: -8px;
+        }
+        .fly::before { left: -20px; transform: rotate(-20deg); }
+        .fly::after { right: -20px; transform: rotate(20deg); }
+        @keyframes fly {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(1200px) translateY(100px); }
+            100% { transform: translateX(2400px) translateY(0); }
+        }
+        .container {
+            padding: 20px 5%;
+            flex: 1;
+        }
+        .hidden { display: none !important; }
+        .card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 25px;
+        }
+        .history-sidebar {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .history-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-item:hover {
+            background: rgba(0,198,255,0.2);
+            transform: translateX(5px);
+        }
+        .history-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .upload-area {
+            border: 2px dashed #00c6ff;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: rgba(0,198,255,0.1);
+            border-color: #00ffcc;
+        }
+        .upload-area i {
+            font-size: 3rem;
+            color: #00c6ff;
+        }
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            font-size: 1rem;
+        }
+        button {
+            padding: 12px 24px;
+            background: #00c6ff;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00ffcc;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #00c6ff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .canvas-container {
+            background: #1a2a32;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .measurements {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .measure-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+        }
+        .measure-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00c6ff;
+        }
+        .measure-unit {
+            color: #aaa;
+        }
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #00c6ff;
+        }
+        footer {
+            background: #111;
+            padding: 20px;
+            text-align: center;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">🪰 Fly AI</div>
+        <div class="nav-buttons hidden" id="navButtons">
+            <button onclick="showDashboard()"><i class="fas fa-chart-bar"></i> Dashboard</button>
+            <button onclick="showProfile()"><i class="fas fa-user"></i> Profile</button>
+            <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </nav>
+
+    <!-- HERO LANDING (visible before login) -->
+    <div class="hero" id="homeSection">
+        <h1>Fly AI</h1>
+        <p>Automated morphological analysis of fruit fly images using deep learning</p>
+        <button class="btn" onclick="scrollToInfo()">Explore Project</button>
+        <div class="fly"></div>
+    </div>
+
+    <!-- INFO SECTION -->
+    <div class="section" id="infoSection">
+        <h2>About the Project</h2>
+        <p style="max-width:800px; margin:20px auto;">Fly AI automates measurement of wing vein length, eye area, and tibia length in Drosophila melanogaster. It provides a human-in-the-loop review with FAIR data export.</p>
+        <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:40px 0;">
+            <div class="card" style="width:200px;"><i class="fas fa-upload" style="font-size:2rem;"></i><h3>Upload</h3><p>Drag & drop images</p></div>
+            <div class="card" style="width:200px;"><i class="fas fa-brain" style="font-size:2rem;"></i><h3>AI Analysis</h3><p>Segmentation & measurement</p></div>
+            <div class="card" style="width:200px;"><i class="fas fa-edit" style="font-size:2rem;"></i><h3>Review</h3><p>Adjustable overlays</p></div>
+            <div class="card" style="width:200px;"><i class="fas fa-download" style="font-size:2rem;"></i><h3>Export</h3><p>CSV / JSON with metadata</p></div>
+        </div>
+        <button class="btn" onclick="showLogin()"><i class="fas fa-sign-in-alt"></i> Access System</button>
+    </div>
+
+    <!-- LOGIN PAGE -->
+    <div class="container hidden" id="loginPage">
+        <div class="card" style="max-width:400px; margin:50px auto;">
+            <h2><i class="fas fa-lock"></i> Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()"><i class="fas fa-sign-in-alt"></i> Login</button>
+            <p style="margin-top:15px;">Demo: any credentials</p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD (main app) -->
+    <div class="container hidden" id="dashboardPage">
+        <div class="dashboard-grid">
+            <!-- History sidebar -->
+            <div class="history-sidebar">
+                <h3><i class="fas fa-history"></i> Recent Analyses</h3>
+                <div id="historyList"></div>
+                <button onclick="clearHistory()" style="width:100%; margin-top:15px;"><i class="fas fa-trash"></i> Clear History</button>
+            </div>
+
+            <!-- Main content -->
+            <div>
+                <div class="card">
+                    <h2>Upload Image</h2>
+                    <div class="upload-area" id="dropArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop an image or click to select</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                    </div>
+                    <select id="organSelect">
+                        <option value="wing">Wing (L3 vein length)</option>
+                        <option value="eye">Eye (area & ommatidia)</option>
+                        <option value="tibia">Tibia (leg length)</option>
+                    </select>
+                    <button onclick="triggerUpload()"><i class="fas fa-play"></i> Start Analysis</button>
+                </div>
+
+                <!-- Processing spinner -->
+                <div id="processing" class="hidden">
+                    <div class="loader"></div>
+                    <p>AI is analyzing the image...</p>
+                </div>
+
+                <!-- Results area (hidden until analysis done) -->
+                <div id="resultArea" class="hidden">
+                    <div class="card">
+                        <h3>Analysis Result</h3>
+                        <div class="canvas-container" id="canvasContainer">
+                            <canvas id="analysisCanvas" width="600" height="400"></canvas>
+                        </div>
+                        <div style="display:flex; gap:10px; justify-content:center; margin:10px 0;">
+                            <button onclick="resetOverlays()"><i class="fas fa-undo"></i> Reset</button>
+                            <button onclick="acceptMeasurements()"><i class="fas fa-check"></i> Accept</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Measurements</h3>
+                        <div class="measurements" id="measurementsDiv"></div>
+                        <div style="margin-top:20px;">
+                            <button onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+                            <button onclick="exportJSON()"><i class="fas fa-file-code"></i> Export JSON</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="container hidden" id="profilePage">
+        <div class="card" style="max-width:600px; margin:auto;">
+            <h2><i class="fas fa-user-circle"></i> User Profile</h2>
+            <div style="text-align:center;">
+                <img id="profilePreview" class="profile-pic hidden" src="">
+                <input type="file" id="profileUpload" accept="image/*" style="margin:10px auto;">
+            </div>
+            <input type="text" id="fullName" placeholder="Full Name">
+            <input type="email" id="email" placeholder="Email">
+            <input type="text" id="institution" placeholder="Institution">
+            <textarea id="researchInterest" placeholder="Research Interest" rows="3"></textarea>
+            <button onclick="saveProfile()"><i class="fas fa-save"></i> Save Profile</button>
+        </div>
+    </div>
+
+    <footer>© 2026 Fly AI | MSc AI Group Project</footer>
+
+    <script>
+        // ---------- Global state ----------
+        let currentUser = localStorage.getItem('flyUser');
+        let currentImage = null;           // HTML Image element
+        let currentFile = null;             // File object
+        let organ = 'wing';
+        let canvas, fabricCanvas;
+        let originalImageWidth, originalImageHeight;
+        let autoPoints = {};                // Store points from AI
+        let reviewedPoints = {};             // Current points (after dragging)
+        let history = JSON.parse(localStorage.getItem('flyHistory')) || [];
+
+        // ---------- UI Navigation ----------
+        function scrollToInfo() {
+            document.getElementById('infoSection').scrollIntoView({behavior:'smooth'});
+        }
+        function showLogin() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('infoSection').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+        }
+        function login() {
+            let u = document.getElementById('username').value;
+            let p = document.getElementById('password').value;
+            if (u && p) {
+                localStorage.setItem('flyUser', u);
+                currentUser = u;
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('dashboardPage').classList.remove('hidden');
+                document.getElementById('navButtons').classList.remove('hidden');
+                renderHistory();
+            } else alert('Enter credentials');
+        }
+        function logout() {
+            localStorage.removeItem('flyUser');
+            location.reload();
+        }
+        function showDashboard() {
+            document.getElementById('profilePage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            renderHistory();
+        }
+        function showProfile() {
+            document.getElementById('dashboardPage').classList.add('hidden');
+            document.getElementById('profilePage').classList.remove('hidden');
+        }
+
+        // ---------- Upload handling ----------
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+
+        dropArea.addEventListener('click', () => fileInput.click());
+        dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.style.background='rgba(0,198,255,0.2)'; });
+        dropArea.addEventListener('dragleave', () => dropArea.style.background='');
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.background='';
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFileSelect(e.target.files[0]);
+        });
+
+        function handleFileSelect(file) {
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = new Image();
+                currentImage.onload = () => {
+                    // Store original dimensions
+                    originalImageWidth = currentImage.width;
+                    originalImageHeight = currentImage.height;
+                    // Show preview in drop area (optional)
+                    dropArea.innerHTML = `<img src="${e.target.result}" style="max-height:150px; border-radius:10px;"><p>${file.name}</p>`;
+                };
+                currentImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function triggerUpload() {
+            if (!currentFile) { alert('Please select an image'); return; }
+            organ = document.getElementById('organSelect').value;
+            document.getElementById('processing').classList.remove('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
+            // Simulate AI processing delay
+            setTimeout(() => {
+                runAIAnalysis();
+            }, 2000);
+        }
+
+        // ---------- AI Simulation ----------
+        function runAIAnalysis() {
+            document.getElementById('processing').classList.add('hidden');
+            document.getElementById('resultArea').classList.remove('hidden');
+            // Initialize canvas with fabric
+            initCanvas();
+            // Generate mock AI points based on organ
+            generateAutoPoints();
+            // Draw overlays
+            drawOverlays();
+            // Update measurements table
+            updateMeasurements();
+            // Save to history
+            saveToHistory();
+        }
+
+        function initCanvas() {
+            const canvasEl = document.getElementById('analysisCanvas');
+            // Set canvas size to fit container while keeping aspect ratio
+            const container = document.getElementById('canvasContainer');
+            const maxWidth = container.clientWidth - 20;
+            const scale = Math.min(1, maxWidth / originalImageWidth);
+            canvasEl.width = originalImageWidth * scale;
+            canvasEl.height = originalImageHeight * scale;
+            if (fabricCanvas) fabricCanvas.dispose();
+            fabricCanvas = new fabric.Canvas('analysisCanvas', {
+                selection: false,
+                preserveObjectStacking: true
+            });
+            // Add background image
+            fabric.Image.fromURL(currentImage.src, (img) => {
+                img.scaleToWidth(canvasEl.width);
+                fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
+                fabricCanvas.renderAll();
+            });
+        }
+
+        function generateAutoPoints() {
+            const w = originalImageWidth, h = originalImageHeight;
+            if (organ === 'wing') {
+                // Two points for L3 vein: roughly (0.3w,0.4h) and (0.7w,0.4h)
+                autoPoints = {
+                    p1: { x: w*0.3, y: h*0.4 },
+                    p2: { x: w*0.7, y: h*0.4 }
+                };
+            } else if (organ === 'eye') {
+                // Polygon for eye mask (8 points around ellipse)
+                const cx = w*0.5, cy = h*0.5;
+                const rx = w*0.2, ry = h*0.15;
+                autoPoints.polygon = [];
+                for (let i=0; i<8; i++) {
+                    let angle = (i/8)*Math.PI*2;
+                    autoPoints.polygon.push({
+                        x: cx + rx*Math.cos(angle),
+                        y: cy + ry*Math.sin(angle)
+                    });
+                }
+            } else if (organ === 'tibia') {
+                // Two endpoints for leg (diagonal)
+                autoPoints = {
+                    p1: { x: w*0.2, y: h*0.2 },
+                    p2: { x: w*0.8, y: h*0.8 }
+                };
+            }
+            // Deep copy for reviewed points
+            reviewedPoints = JSON.parse(JSON.stringify(autoPoints));
+        }
+
+        function drawOverlays() {
+            fabricCanvas.clear(); // background remains
+            const scaleX = fabricCanvas.width / originalImageWidth;
+            const scaleY = fabricCanvas.height / originalImageHeight;
+
+            if (organ === 'wing' || organ === 'tibia') {
+                // Draw draggable circles for two points
+                const p1 = reviewedPoints.p1;
+                const p2 = reviewedPoints.p2;
+                const circle1 = new fabric.Circle({
+                    left: p1.x * scaleX - 5,
+                    top: p1.y * scaleY - 5,
+                    radius: 8,
+                    fill: 'rgba(0,198,255,0.8)',
+                    stroke: 'white',
+                    strokeWidth: 2,
+                    originX: 'center', originY: 'center',
+                    hasBorders: false, hasControls: false,
+                    lockScalingX: true, lockScalingY: true,
+                    name: 'p1'
+                });
+                const circle2 = new fabric.Circle({
+                    left: p2.x * scaleX - 5,
+                    top: p2.y * scaleY - 5,
+                    radius: 8,
+                    fill: 'rgba(255,100,100,0.8)',
+                    stroke: 'white',
+                    strokeWidth: 2,
+                    originX: 'center', originY: 'center',
+                    hasBorders: false, hasControls: false,
+                    name: 'p2'
+                });
+                // Draw line
+                const line = new fabric.Line([p1.x*scaleX, p1.y*scaleY, p2.x*scaleX, p2.y*scaleY], {
+                    stroke: 'yellow',
+                    strokeWidth: 2,
+                    evented: false
+                });
+                fabricCanvas.add(line);
+                fabricCanvas.add(circle1);
+                fabricCanvas.add(circle2);
+
+                // Make circles draggable and update reviewedPoints on move
+                circle1.on('moving', () => {
+                    const newX = circle1.left / scaleX + 5/scaleX;
+                    const newY = circle1.top / scaleY + 5/scaleY;
+                    reviewedPoints.p1 = { x: newX, y: newY };
+                    updateLine();
+                    updateMeasurements();
+                });
+                circle2.on('moving', () => {
+                    const newX = circle2.left / scaleX + 5/scaleX;
+                    const newY = circle2.top / scaleY + 5/scaleY;
+                    reviewedPoints.p2 = { x: newX, y: newY };
+                    updateLine();
+                    updateMeasurements();
+                });
+
+                function updateLine() {
+                    // Remove old line and add new
+                    const oldLine = fabricCanvas.getObjects().find(obj => obj.type === 'line');
+                    if (oldLine) fabricCanvas.remove(oldLine);
+                    const newLine = new fabric.Line([
+                        reviewedPoints.p1.x*scaleX, reviewedPoints.p1.y*scaleY,
+                        reviewedPoints.p2.x*scaleX, reviewedPoints.p2.y*scaleY
+                    ], { stroke: 'yellow', strokeWidth: 2, evented: false });
+                    fabricCanvas.add(newLine);
+                    fabricCanvas.renderAll();
+                }
+            } else if (organ === 'eye') {
+                // Draw polygon with draggable points
+                const points = reviewedPoints.polygon.map(p => ({ x: p.x*scaleX, y: p.y*scaleY }));
+                // Draw polygon fill
+                const poly = new fabric.Polygon(points, {
+                    fill: 'rgba(0,198,255,0.2)',
+                    stroke: 'cyan',
+                    strokeWidth: 2,
+                    selectable: false,
+                    evented: false
+                });
+                fabricCanvas.add(poly);
+                // Draw draggable circles
+                reviewedPoints.polygon.forEach((pt, idx) => {
+                    const circle = new fabric.Circle({
+                        left: pt.x*scaleX - 5,
+                        top: pt.y*scaleY - 5,
+                        radius: 6,
+                        fill: 'lime',
+                        stroke: 'white',
+                        originX: 'center', originY: 'center',
+                        hasBorders: false, hasControls: false,
+                        name: `poly_${idx}`
+                    });
+                    circle.on('moving', () => {
+                        const newX = circle.left / scaleX + 5/scaleX;
+                        const newY = circle.top / scaleY + 5/scaleY;
+                        reviewedPoints.polygon[idx] = { x: newX, y: newY };
+                        updatePolygon();
+                        updateMeasurements();
+                    });
+                    fabricCanvas.add(circle);
+                });
+
+                function updatePolygon() {
+                    const newPoints = reviewedPoints.polygon.map(p => ({ x: p.x*scaleX, y: p.y*scaleY }));
+                    const oldPoly = fabricCanvas.getObjects().find(obj => obj.type === 'polygon');
+                    if (oldPoly) fabricCanvas.remove(oldPoly);
+                    const newPoly = new fabric.Polygon(newPoints, {
+                        fill: 'rgba(0,198,255,0.2)',
+                        stroke: 'cyan',
+                        strokeWidth: 2,
+                        selectable: false,
+                        evented: false
+                    });
+                    fabricCanvas.add(newPoly);
+                    fabricCanvas.renderAll();
+                }
+            }
+            fabricCanvas.renderAll();
+        }
+
+        // Reset to auto-detected points
+        function resetOverlays() {
+            reviewedPoints = JSON.parse(JSON.stringify(autoPoints));
+            drawOverlays();
+            updateMeasurements();
+        }
+
+        // Accept current reviewed points (could store as accepted)
+        function acceptMeasurements() {
+            alert('Measurements accepted and recorded.');
+            // In real app, you would save reviewed values to database
+        }
+
+        // Update measurements table based on current points
+        function updateMeasurements() {
+            const pxToMm = 0.01; // mock calibration
+            let autoVal, reviewedVal, unit;
+            if (organ === 'wing') {
+                const autoDist = distance(autoPoints.p1, autoPoints.p2);
+                const reviewedDist = distance(reviewedPoints.p1, reviewedPoints.p2);
+                autoVal = (autoDist * pxToMm).toFixed(3);
+                reviewedVal = (reviewedDist * pxToMm).toFixed(3);
+                unit = 'mm';
+            } else if (organ === 'tibia') {
+                const autoDist = distance(autoPoints.p1, autoPoints.p2);
+                const reviewedDist = distance(reviewedPoints.p1, reviewedPoints.p2);
+                autoVal = (autoDist * pxToMm).toFixed(3);
+                reviewedVal = (reviewedDist * pxToMm).toFixed(3);
+                unit = 'mm';
+            } else if (organ === 'eye') {
+                // Approximate area using polygon area formula
+                const autoArea = polygonArea(autoPoints.polygon) * pxToMm * pxToMm;
+                const reviewedArea = polygonArea(reviewedPoints.polygon) * pxToMm * pxToMm;
+                autoVal = autoArea.toFixed(3);
+                reviewedVal = reviewedArea.toFixed(3);
+                unit = 'mm²';
+            }
+
+            const html = `
+                <div class="measure-card">
+                    <div>Auto-detected</div>
+                    <div class="measure-value">${autoVal}</div>
+                    <div class="measure-unit">${unit}</div>
+                </div>
+                <div class="measure-card">
+                    <div>Reviewed</div>
+                    <div class="measure-value">${reviewedVal}</div>
+                    <div class="measure-unit">${unit}</div>
+                </div>
+            `;
+            document.getElementById('measurementsDiv').innerHTML = html;
+        }
+
+        // Helper functions
+        function distance(p1, p2) {
+            return Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        }
+        function polygonArea(points) {
+            let area = 0;
+            for (let i = 0; i < points.length; i++) {
+                const j = (i + 1) % points.length;
+                area += points[i].x * points[j].y;
+                area -= points[j].x * points[i].y;
+            }
+            return Math.abs(area) / 2;
+        }
+
+        // ---------- History ----------
+        function saveToHistory() {
+            const entry = {
+                id: Date.now(),
+                filename: currentFile.name,
+                organ: organ,
+                imageData: currentImage.src, // store dataURL (might be large, but fine for demo)
+                autoPoints: autoPoints,
+                reviewedPoints: reviewedPoints,
+                date: new Date().toLocaleString()
+            };
+            history.unshift(entry);
+            if (history.length > 10) history.pop();
+            localStorage.setItem('flyHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (history.length === 0) {
+                list.innerHTML = '<p>No history yet.</p>';
+                return;
+            }
+            list.innerHTML = history.map(item => `
+                <div class="history-item" onclick="loadHistoryEntry('${item.id}')">
+                    <img src="${item.imageData}" alt="thumb">
+                    <div>
+                        <strong>${item.filename}</strong><br>
+                        <small>${item.organ} | ${item.date}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadHistoryEntry(id) {
+            const entry = history.find(e => e.id == id);
+            if (!entry) return;
+            // Reload this analysis
+            currentFile = { name: entry.filename };
+            currentImage = new Image();
+            currentImage.onload = () => {
+                originalImageWidth = currentImage.width;
+                originalImageHeight = currentImage.height;
+                organ = entry.organ;
+                document.getElementById('organSelect').value = organ;
+                autoPoints = entry.autoPoints;
+                reviewedPoints = entry.reviewedPoints;
+                initCanvas();
+                drawOverlays();
+                updateMeasurements();
+                document.getElementById('resultArea').classList.remove('hidden');
+                document.getElementById('processing').classList.add('hidden');
+                // Update drop area preview
+                dropArea.innerHTML = `<img src="${entry.imageData}" style="max-height:150px; border-radius:10px;"><p>${entry.filename}</p>`;
+            };
+            currentImage.src = entry.imageData;
+        }
+
+        function clearHistory() {
+            history = [];
+            localStorage.removeItem('flyHistory');
+            renderHistory();
+        }
+
+        // ---------- Export ----------
+        function exportCSV() {
+            const reviewed = getReviewedValue();
+            const auto = getAutoValue();
+            const row = `Filename,Organ,Auto (mm),Reviewed (mm),Unit,Calibration (mm/px)\n${currentFile?.name || 'unknown'},${organ},${auto},${reviewed},mm,0.01`;
+            downloadBlob(row, 'fly_analysis.csv', 'text/csv');
+        }
+
+        function exportJSON() {
+            const data = {
+                image: currentFile?.name,
+                organ: organ,
+                autoValue: getAutoValue(),
+                reviewedValue: getReviewedValue(),
+                unit: organ==='eye'?'mm²':'mm',
+                calibration: 0.01,
+                timestamp: new Date().toISOString(),
+                points: reviewedPoints,
+                user: currentUser
+            };
+            downloadBlob(JSON.stringify(data, null, 2), 'fly_analysis.json', 'application/json');
+        }
+
+        function getAutoValue() {
+            if (organ === 'wing' || organ === 'tibia') {
+                return (distance(autoPoints.p1, autoPoints.p2)*0.01).toFixed(3);
+            } else {
+                return (polygonArea(autoPoints.polygon)*0.01*0.01).toFixed(3);
+            }
+        }
+        function getReviewedValue() {
+            if (organ === 'wing' || organ === 'tibia') {
+                return (distance(reviewedPoints.p1, reviewedPoints.p2)*0.01).toFixed(3);
+            } else {
+                return (polygonArea(reviewedPoints.polygon)*0.01*0.01).toFixed(3);
+            }
+        }
+
+        function downloadBlob(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // ---------- Profile ----------
+        document.getElementById('profileUpload').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                let img = document.getElementById('profilePreview');
+                img.src = reader.result;
+                img.classList.remove('hidden');
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        function saveProfile() {
+            alert('Profile Saved Successfully');
+        }
+
+        // Check if user already logged in
+        if (currentUser) {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('infoSection').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            document.getElementById('navButtons').classList.remove('hidden');
+            renderHistory();
+        }
+    </script>
+</body>
+</html>
