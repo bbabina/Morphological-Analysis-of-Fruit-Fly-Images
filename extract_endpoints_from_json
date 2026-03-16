@@ -1,0 +1,96 @@
+# Extract L3_start/L3_end coordinates from Roboflow COCO JSON annotations and compute pixel distances. Outputs CSV with distances.
+
+import json
+import math
+import os
+import glob
+import pandas as pd
+from pathlib import Path
+
+PROJECT_ROOT = "/Users/babina/Desktop/Group Software Project/Morphological-Analysis-of-Fruit-Fly-Images"
+JSON_DIR = os.path.join(PROJECT_ROOT, "data", "wing_landmarks_raw_png")
+JSON_PATTERN = os.path.join(JSON_DIR, "*.json")
+OUTPUT_CSV = os.path.join(PROJECT_ROOT, "landmark_distances.csv")
+
+def load_all_json_files(pattern: str):
+    json_files = glob.glob(pattern)
+    if not json_files:
+        raise FileNotFoundError(f"No JSON files found at {pattern}")
+    
+    print(f"Found {len(json_files)} JSON file(s)")
+    all_images = []
+    all_annotations = []
+    all_categories = []
+    
+    for json_file in json_files:
+        with open(json_file, "r") as f:
+            data = json.load(f)
+        all_images.extend(data.get("images", []))
+        all_annotations.extend(data.get("annotations", []))
+        all_categories.extend(data.get("categories", []))
+    
+    return {"images": all_images, "annotations": all_annotations, "categories": all_categories}
+
+def build_point_table(coco: dict) -> pd.DataFrame:
+    id_to_image = {img["id"]: img for img in coco["images"]}
+    id_to_cat = {cat["id"]: cat["name"] for cat in coco["categories"]}
+    
+    rows = []
+    for ann in coco["annotations"]:
+        img_id = ann["image_id"]
+        if img_id not in id_to_image:
+            continue
+            
+        img = id_to_image[img_id]
+        filename = img["file_name"]
+        cat_name = id_to_cat.get(ann["category_id"], "unknown")
+        
+        bx, by, bw, bh = ann["bbox"]
+        x, y, w, h = float(bx), float(by), float(bw), float(bh)
+        cx = x + w / 2.0
+        cy = y + h / 2.0
+        
+        rows.append({
+            "filename": filename,
+            "category": cat_name,
+            "cx": cx, "cy": cy,
+            "img_width": img["width"],
+            "img_height": img["height"]
+        })
+    
+    return pd.DataFrame(rows)
+
+def compute_distances(df_pts: pd.DataFrame) -> pd.DataFrame:
+    df_start = df_pts[df_pts["category"] == "L3_start"].set_index("filename")
+    df_end = df_pts[df_pts["category"] == "L3_end"].set_index("filename")
+    
+    common = df_start.index.intersection(df_end.index)
+    data = []
+    for fname in common:
+        sx, sy = df_start.loc[fname, ["cx", "cy"]]
+        ex, ey = df_end.loc[fname, ["cx", "cy"]]
+        dist_px = math.sqrt((sx - ex)**2 + (sy - ey)**2)
+        data.append({
+            "filename": fname,
+            "dist_px": dist_px,
+            "start_x": sx, "start_y": sy,
+            "end_x": ex, "end_y": ey
+        })
+    
+    return pd.DataFrame(data)
+
+def main():
+    print("Extracting L3 landmarks from Roboflow JSON...")
+    
+    coco = load_all_json_files(JSON_PATTERN)
+    df_pts = build_point_table(coco)
+    df_dist = compute_distances(df_pts)
+    
+    print(f"\n Extracted {len(df_dist)} L3 vein distances (pixels)")
+    print(df_dist[["filename", "dist_px"]].head())
+    
+    df_dist.to_csv(OUTPUT_CSV, index=False)
+    print(f"\n Saved to: {OUTPUT_CSV}")
+
+if __name__ == "__main__":
+    main()
