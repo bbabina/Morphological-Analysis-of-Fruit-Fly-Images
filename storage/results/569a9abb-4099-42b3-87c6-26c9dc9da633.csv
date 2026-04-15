@@ -1,0 +1,2 @@
+analysis_id,original_filename,saved_filename,timestamp_utc,model_version,task,method,width,height,point_8_x,point_8_y,point_13_x,point_13_y,length_px,length_mm,pixels_per_mm,reviewer_status,overlay_path
+569a9abb-4099-42b3-87c6-26c9dc9da633,TE14_zi134_18C_F_wing_1_250815_001.TIF,569a9abb-4099-42b3-87c6-26c9dc9da633.tif,2026-04-15T09:53:11.739475+00:00,best.pt,wing_l3_straight,2_keypoint_pose,1360,1024,370.2898254394531,200.16851806640625,1342.85205078125,782.2090454101562,1133.4233,1.402752,808.0,pending,storage/results/569a9abb-4099-42b3-87c6-26c9dc9da633_overlay.jpg
