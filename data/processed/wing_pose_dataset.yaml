@@ -1,0 +1,9 @@
+path: data/annotations
+train: images/train
+val: images/val
+
+kpt_shape: [2, 3]
+flip_idx: [0, 1]
+
+names:
+  0: wing
