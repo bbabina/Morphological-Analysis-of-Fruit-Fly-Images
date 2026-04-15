@@ -8,9 +8,9 @@ import pandas as pd
 from pathlib import Path
 
 PROJECT_ROOT = "/Users/babina/Desktop/Group Software Project/Morphological-Analysis-of-Fruit-Fly-Images"
-JSON_DIR = os.path.join(PROJECT_ROOT, "data", "wing_landmarks_raw_png")
+JSON_DIR = os.path.join(PROJECT_ROOT, "data", "wing_data_new")
 JSON_PATTERN = os.path.join(JSON_DIR, "*.json")
-OUTPUT_CSV = os.path.join(PROJECT_ROOT, "landmark_distances.csv")
+OUTPUT_CSV = os.path.join(PROJECT_ROOT, "landmark_distances_new.csv")
 
 def load_all_json_files(pattern: str):
     json_files = glob.glob(pattern)
