@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.core.config import settings
@@ -15,9 +16,35 @@ from app.services.review_service import save_review
 from app.utils.files import save_upload_file
 from app.utils.image_ops import draw_overlay, get_image_size, load_image
 
-app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
-predictor = None
+# Import the new routers
+from app.api import auth, users, records
+from app.api.dependencies import get_current_user
+from app.core.database import engine, Base
+from app.models import user, analysis  # noqa: F401
 
+# Create the FastAPI app FIRST
+app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
+
+# CORS middleware (allow frontend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers AFTER app is defined
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(records.router)
+
+# Create database tables on startup
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
+
+predictor = None
 
 def get_predictor():
     global predictor
@@ -27,11 +54,9 @@ def get_predictor():
         predictor = WingPosePredictor(settings.model_path)
     return predictor
 
-
 @app.get("/health")
 def health():
     return {"status": "ok", "app": settings.APP_NAME, "version": settings.APP_VERSION}
-
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_image(
@@ -49,7 +74,7 @@ async def analyze_image(
 
     point_8 = (pred["point_8"]["x"], pred["point_8"]["y"])
     point_13 = (pred["point_13"]["x"], pred["point_13"]["y"])
-    measurement = compute_measurement(point_8, point_13, pixels_per_mm)
+    measurement = compute_measurement(point_8, point_13, None, pixels_per_mm)
 
     overlay_path = settings.results_dir / f"{analysis_id}_overlay.jpg"
     draw_overlay(image, point_8, point_13, overlay_path)
@@ -79,7 +104,6 @@ async def analyze_image(
     export_json(response_payload, Path(response_payload["json_path"]))
     export_csv(response_payload, settings.results_dir / f"{analysis_id}.csv")
     return response_payload
-
 
 @app.post("/review/{analysis_id}", response_model=ReviewResponse)
 def review_analysis(analysis_id: str, payload: ReviewRequest):
@@ -120,14 +144,12 @@ def review_analysis(analysis_id: str, payload: ReviewRequest):
         "review_path": str(review_path),
     }
 
-
 @app.get("/result/{analysis_id}")
 def get_result(analysis_id: str):
     result_json = settings.results_dir / f"{analysis_id}.json"
     if not result_json.exists():
         raise HTTPException(status_code=404, detail="Result not found")
     return FileResponse(result_json, media_type="application/json", filename=result_json.name)
-
 
 @app.get("/export/{analysis_id}")
 def export_result(analysis_id: str, format: str = Query(default="json", pattern="^(json|csv)$")):
