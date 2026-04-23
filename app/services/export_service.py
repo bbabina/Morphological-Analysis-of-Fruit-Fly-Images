@@ -9,6 +9,8 @@ def export_json(data: dict, out_path: Path):
 
 
 def export_csv(data: dict, out_path: Path):
+    measurement = data["measurement"]   # flat dict: length_px, length_mm, pixels_per_mm, ...
+
     flat = {
         "analysis_id": data["metadata"]["analysis_id"],
         "original_filename": data["metadata"]["original_filename"],
@@ -23,9 +25,11 @@ def export_csv(data: dict, out_path: Path):
         "point_8_y": data["point_8"]["y"],
         "point_13_x": data["point_13"]["x"],
         "point_13_y": data["point_13"]["y"],
-        "length_px": data["measurement"]["length_px"],
-        "length_mm": data["measurement"]["length_mm"],
-        "pixels_per_mm": data["measurement"]["pixels_per_mm"],
+        "length_px": measurement["length_px"],
+        "length_mm": measurement["length_mm"],
+        "pixels_per_mm": measurement["pixels_per_mm"],
+        "curved_length_px": measurement.get("curved_length_px", ""),
+        "curved_length_mm": measurement.get("curved_length_mm", ""),
         "reviewer_status": data.get("reviewer_status", "pending"),
         "overlay_path": data["overlay_path"],
     }
