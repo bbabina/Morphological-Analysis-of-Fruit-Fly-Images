@@ -50,10 +50,10 @@ class AnalyzeResponse(BaseModel):
 class ReviewRequest(BaseModel):
     point_8: Point2D
     point_13: Point2D
-    curved_points: Optional[List[Point2D]] = None   # NEW: optional curved path points
+    intermediate_points: list[Point2D] = []  # NEW: curved path points
     reviewer: str = Field(default="anonymous")
     decision: Literal["accepted", "adjusted", "rejected"]
-    comment: Optional[str] = None
+    comment: str | None = None
 
 class ReviewResponse(BaseModel):
     status: Literal["success"] = "success"
