@@ -25,11 +25,13 @@ def pixels_to_mm(length_px: float, pixels_per_mm: Optional[float] = None) -> flo
 def compute_measurement(
     point_8: Tuple[float, float],
     point_13: Tuple[float, float],
-    curved_path: Optional[List[Tuple[float, float]]] = None,
+    intermediate_points: Optional[List[Tuple[float, float]]] = None,
     pixels_per_mm: Optional[float] = None,
-):
+) -> dict:
+    """Compute straight and/or curved measurement."""
     ppm = pixels_per_mm if pixels_per_mm is not None else settings.PIXELS_PER_MM
 
+    # Always compute straight-line measurement
     straight_px = euclidean_distance(point_8, point_13)
     straight_mm = pixels_to_mm(straight_px, ppm)
 
@@ -39,8 +41,10 @@ def compute_measurement(
         "pixels_per_mm": ppm,
     }
 
-    if curved_path is not None and len(curved_path) >= 2:
-        curved_px = polyline_distance(curved_path)
+    # If intermediate points are provided, compute curved measurement
+    if intermediate_points:
+        full_path = [point_8] + intermediate_points + [point_13]
+        curved_px = polyline_distance(full_path)
         curved_mm = pixels_to_mm(curved_px, ppm)
         result["curved_length_px"] = round(curved_px, 4)
         result["curved_length_mm"] = round(curved_mm, 6)
