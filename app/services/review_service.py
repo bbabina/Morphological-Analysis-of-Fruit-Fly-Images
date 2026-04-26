@@ -5,7 +5,19 @@ from app.core.config import settings
 from app.services.measurement_service import compute_measurement
 
 
-def save_review(analysis_id: str, point_8: tuple[float, float], point_13: tuple[float, float], reviewer: str, decision: str, comment: str | None, pixels_per_mm: float):
+def save_review(
+    analysis_id: str,
+    point_8: tuple,
+    point_13: tuple,
+    intermediate_points: list = None,
+    reviewer: str = "anonymous",
+    decision: str = "adjusted",
+    comment: str = None,
+    pixels_per_mm: float = None,
+):
+    if intermediate_points is None:
+        intermediate_points = []
+    
     review = {
         "analysis_id": analysis_id,
         "reviewer": reviewer,
@@ -14,9 +26,19 @@ def save_review(analysis_id: str, point_8: tuple[float, float], point_13: tuple[
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "point_8": {"x": point_8[0], "y": point_8[1]},
         "point_13": {"x": point_13[0], "y": point_13[1]},
-        "measurement": compute_measurement(point_8, point_13, pixels_per_mm),
+        "intermediate_points": [{"x": p[0], "y": p[1]} for p in intermediate_points],
     }
+    
+    # Calculate measurements
+    if intermediate_points:
+        measurement = compute_curved_measurement(point_8, point_13, intermediate_points, pixels_per_mm)
+    else:
+        measurement = compute_measurement(point_8, point_13, None, pixels_per_mm)
+    
+    review["measurement"] = measurement
+    
     out_path = settings.results_dir / f"{analysis_id}_review.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(review, f, indent=2)
+    
     return review, out_path
