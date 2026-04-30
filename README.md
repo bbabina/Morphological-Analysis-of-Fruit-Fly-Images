@@ -42,5 +42,4 @@ python scripts/train_pose.py
 ```
 
 
-<img width="1360" height="1024" alt="image" src="https://github.com/user-attachments/assets/cf2c8a3f-b83f-40f4-b7bc-3c9322fe4f3b" />
 
