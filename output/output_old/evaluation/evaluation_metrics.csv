@@ -1,0 +1,2 @@
+n_evaluated,n_missing_images,n_failed_predictions,mae_mm,rmse_mm,mape_percent,r2,pearson_r,mean_point8_conf,mean_point13_conf,pixels_per_mm,confidence_threshold
+39,0,0,0.20204673930839356,0.23619940103285136,14.810342339360213,-8.271153558856488,0.23219856246534645,0.975019517617348,0.7839514590226687,808.0,0.25
